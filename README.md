@@ -7,5 +7,8 @@ https://gravityforms.com/
 
 ### Changes
 
+#### v1.0.1 - 2021.10.05
+Support for more fields, and php 8
+
 #### v1.0.0 - 2021.09.20
 Initial release

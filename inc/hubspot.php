@@ -49,12 +49,17 @@ function klypEditorScript()
 {
     $return = '
         <script type="text/javascript">
+            fieldSettings.checkbox += ", .gf_to_hs_setting";
+            fieldSettings.email += ", .gf_to_hs_setting";
+            fieldSettings.hidden += ", .gf_to_hs_setting";
+            fieldSettings.multiselect += ", .gf_to_hs_setting";
+            fieldSettings.number += ", .gf_to_hs_setting";
+            fieldSettings.number += ", .gf_to_hs_setting";
+            fieldSettings.phone += ", .gf_to_hs_setting";
+            fieldSettings.radio += ", .gf_to_hs_setting";
+            fieldSettings.select += ", .gf_to_hs_setting";
             fieldSettings.text += ", .gf_to_hs_setting";
             fieldSettings.textarea += ", .gf_to_hs_setting";
-            fieldSettings.email += ", .gf_to_hs_setting";
-            fieldSettings.phone += ", .gf_to_hs_setting";
-            fieldSettings.number += ", .gf_to_hs_setting";
-            fieldSettings.select += ", .gf_to_hs_setting";
 
             jQuery(document).on("gform_load_field_settings", function(event, field, form) {
                 jQuery("#field_gf_to_hs_map").val(field["field_gf_to_hs_map"]);

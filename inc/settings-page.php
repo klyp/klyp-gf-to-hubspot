@@ -16,8 +16,8 @@ defined('ABSPATH') || die('Wordpress is not installed properly.');
     <section>
         <form method="post" action="<?= admin_url('options.php'); ?>">
             <?php
-                settings_fields(KlypGFToHubspot);
-                do_settings_sections(KlypGFToHubspot);
+                settings_fields('KlypGFToHubspot');
+                do_settings_sections('KlypGFToHubspot');
             ?>
             <div id="klyp-gf-to-hubspot-api-key-secret" class="klyp-gf-to-hubspot-api-key">
                 <h2 class="title">Hubspot API Key</h2>

@@ -33,9 +33,9 @@ function klypGFToHubspotRegisterSettings()
 {
     //register our settings
     define('KlypGFToHusbspot', 'klyp-gf-to-hubspot');
-    register_setting(KlypGFToHubspot, 'klyp_gftohs_api_key');
-    register_setting(KlypGFToHubspot, 'klyp_gftohs_portal_id');
-    register_setting(KlypGFToHubspot, 'klyp_gftohs_base_url');
+    register_setting('KlypGFToHubspot', 'klyp_gftohs_api_key');
+    register_setting('KlypGFToHubspot', 'klyp_gftohs_portal_id');
+    register_setting('KlypGFToHubspot', 'klyp_gftohs_base_url');
 }
 add_action('admin_init', 'klypGFToHubspotRegisterSettings');
 

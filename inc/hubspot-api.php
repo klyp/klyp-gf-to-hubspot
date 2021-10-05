@@ -65,7 +65,24 @@ class klypHubspot
     private function processData()
     {
         foreach ($this->gfFormFields as $key => $field) {
-            if (isset($this->postedData[$field['id']]) && ! empty($field['field_gf_to_hs_map'])) {
+            // unset
+            unset($inputFieldTemp);
+
+            // if we have choices
+            if (is_array($field['inputs'])) {
+                foreach ($field['inputs'] as $inputKey => $inputField) {
+                    if (isset($this->postedData[$inputField['id']]) && ! empty($this->postedData[$inputField['id']])) {
+                        $inputFieldTemp[] = $inputField['label'];
+                    }
+                }
+
+                if (count($inputFieldTemp) > 0) {
+                    $this->data[] = array (
+                        'name'  => $field['field_gf_to_hs_map'],
+                        'value' => (is_array($inputFieldTemp) ? implode(';', $inputFieldTemp) : sanitize_text_field($inputFieldTemp))
+                    );
+                }
+            } elseif (isset($this->postedData[$field['id']]) && ! empty($field['field_gf_to_hs_map'])) {
                 $this->data[] = array (
                     'name'  => $field['field_gf_to_hs_map'],
                     'value' => (is_array($this->postedData[$field['id']]) ? implode(';', $this->postedData[$field['id']]) : sanitize_text_field($this->postedData[$field['id']]))

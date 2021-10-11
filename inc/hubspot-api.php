@@ -76,7 +76,7 @@ class klypHubspot
                     }
                 }
 
-                if (count($inputFieldTemp) > 0) {
+                if (isset($inputFieldTemp) && count($inputFieldTemp) > 0) {
                     $this->data[] = array (
                         'name'  => $field['field_gf_to_hs_map'],
                         'value' => (is_array($inputFieldTemp) ? implode(';', $inputFieldTemp) : sanitize_text_field($inputFieldTemp))

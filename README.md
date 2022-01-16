@@ -7,6 +7,9 @@ https://gravityforms.com/
 
 ### Changes
 
+#### v1.0.2 - 2022.01.17
+Stop submission if validation fails
+
 #### v1.0.1 - 2021.10.05
 Support for more fields, and php 8
 

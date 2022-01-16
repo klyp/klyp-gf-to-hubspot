@@ -5,7 +5,7 @@ defined('ABSPATH') || die('Wordpress is not installed properly.');
 
 function klypHsGFCatchSubmission($form)
 {
-    if (empty($form['form']['id'])) {
+    if (empty($form['form']['id']) || ! $form['is_valid'] || $form['is_valid'] === false) {
         return;
     }
 

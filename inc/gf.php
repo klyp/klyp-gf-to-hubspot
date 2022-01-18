@@ -6,7 +6,7 @@ defined('ABSPATH') || die('Wordpress is not installed properly.');
 function klypHsGFCatchSubmission($form)
 {
     if (empty($form['form']['id']) || ! $form['is_valid'] || $form['is_valid'] === false) {
-        return;
+        return $form;
     }
 
     // start hubspot
@@ -20,7 +20,7 @@ function klypHsGFCatchSubmission($form)
     $hubspot->hsEmailField  = $form['form']['klyp-gf-to-hubspot-email-field'];
 
     if (empty($hubspot->hsFormId) && empty($hubspot->hsEmailField)) {
-        return;
+        return $form;
     }
 
     // create contact
@@ -45,7 +45,7 @@ function klypHsGFCatchSubmission($form)
 
     return $form;
 }
-add_action('gform_validation', 'klypHsGFCatchSubmission', 10, 2);
+add_action('gform_validation', 'klypHsGFCatchSubmission');
 
 /**
  * Get string between

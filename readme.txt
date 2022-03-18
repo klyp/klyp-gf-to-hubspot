@@ -2,9 +2,9 @@
 Contributors: klyp
 Tags: contact, form, gravity, forms, hubspot
 Requires at least: 5.2
-Tested up to: 5.8.1
+Tested up to: 5.9.2
 Requires PHP: 7.0
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPL2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,7 +15,10 @@ This plugin allows you to map Gravity Forms fields to Hubspot form fields.
 
 == Changelog ==
 
-#### v1.0.2 - 2022.01.17
+v1.0.3 - 2022.03.18
+Support for Gravity Forms v2.5 and above
+
+v1.0.2 - 2022.01.17
 Stop submission if validation fails
 
 v1.0.1 - 2021.10.05

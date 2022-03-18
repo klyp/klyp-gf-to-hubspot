@@ -7,6 +7,9 @@ https://gravityforms.com/
 
 ### Changes
 
+#### v1.0.3 - 2022.03.18
+Support for Gravity Forms v2.5 and above
+
 #### v1.0.2 - 2022.01.17
 Stop submission if validation fails
 

@@ -72,7 +72,7 @@ function klypEditorScript()
 add_action('gform_editor_js', 'klypEditorScript');
 
 /**
- * Add custom hubspot settings for GF Form
+ * Add custom hubspot settings for GF Form (LEGACY - version < 2.5)
  * @param array
  * @param object
  * @return array
@@ -133,6 +133,12 @@ function klypGFHSAdditionalSettingsLegacy($settings, $form)
     return $settings;
 }
 
+/**
+ * Add custom hubspot settings for GF Form (version > 2.5)
+ * @param array
+ * @param array
+ * @return array
+ */
 function klypGFHSAdditionalSettings($fields, $form)
 {
     // create hubspot form id

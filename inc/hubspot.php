@@ -13,6 +13,7 @@ function klypGFHSFieldMapSetting($position, $form_id)
 {
     // get GF form object
     $GForm = GFAPI::get_form($form_id);
+    $return = '';
 
     // if hubspot form isn't set or empty then do nothing
     if (! isset($GForm['klyp-gf-to-hubspot-form-id']) || empty($GForm['klyp-gf-to-hubspot-form-id'])) {
@@ -76,7 +77,7 @@ add_action('gform_editor_js', 'klypEditorScript');
  * @param object
  * @return array
  */
-function klypGFHSAdditionalSettings($settings, $form)
+function klypGFHSAdditionalSettingsLegacy($settings, $form)
 {
     $settings[__('Hubspot Settings')]['klyp-gf-to-hubspot-form-id'] = '
     <tr>
@@ -131,7 +132,66 @@ function klypGFHSAdditionalSettings($settings, $form)
 
     return $settings;
 }
-add_filter('gform_form_settings', 'klypGFHSAdditionalSettings', 10, 2);
+
+function klypGFHSAdditionalSettings($fields, $form)
+{
+    // create hubspot form id
+    $fields['klyp-gf-to-hubspot']['title'] = 'Hubspot Settings';
+    $fields['klyp-gf-to-hubspot']['fields'][] = array(
+        'name'          => 'klyp-gf-to-hubspot-form-id',
+        'type'          => 'text',
+        'label'         => 'Hubspot Form ID',
+        'default_value' => '',
+        'tooltip'       => 'Please enter your Hubspot Form ID',
+    );
+
+    if (rgar($form, 'klyp-gf-to-hubspot-form-id') == '' || empty(rgar($form, 'klyp-gf-to-hubspot-form-id'))) {
+        return $fields;
+    }
+
+    // create hubspot email field used in GF
+    $gfFields = $form['fields'];
+    $gfFieldsChoices = [];
+
+    foreach ($gfFields as $key => $gfField) {
+        if (empty($gfField->label)) { continue; }
+        $gfFieldsChoices[]  = array(
+            'label' => $gfField->label,
+            'value' => $gfField->id
+        );
+    }
+
+    $fields['klyp-gf-to-hubspot']['fields'][] = array(
+        'name'          => 'klyp-gf-to-hubspot-gf-email-field',
+        'type'          => 'select',
+        'label'         => 'Email field used in gravity form',
+        'default_value' => '',
+        'tooltip'       => 'Please select the email field used in gravity form',
+        'choices'       => $gfFieldsChoices
+    );
+
+    // create hubspot email field used in GF
+    $klypHubspot        = new klypHubspot();
+    $hsFields           = $klypHubspot->getFormFields(rgar($form, 'klyp-gf-to-hubspot-form-id'));
+    $hsFieldsChoices    = [];
+    foreach ($hsFields as $key => $hsField) {
+        $hsFieldsChoices[] = array(
+            'label' => $hsField->label,
+            'value' => $hsField->name
+        );
+    }
+
+    $fields['klyp-gf-to-hubspot']['fields'][] = array(
+        'name'          => 'klyp-gf-to-hubspot-email-field',
+        'type'          => 'select',
+        'label'         => 'Email field used in Hubspot',
+        'default_value' => '',
+        'tooltip'       => 'Please select the Hubspot email field',
+        'choices'       => $hsFieldsChoices
+    );
+
+    return $fields;
+}
 
 /**
  * Save settings on submit
@@ -145,4 +205,11 @@ function klypGFHSAdditionalSettingsSubmit($form)
     $form['klyp-gf-to-hubspot-email-field']     = rgpost('klyp-gf-to-hubspot-email-field');
     return $form;
 }
-add_filter('gform_pre_form_settings_save', 'klypGFHSAdditionalSettingsSubmit', 10, 2);
+
+// Check GF version
+if (floatval(GFFormsModel::get_database_version()) >= 2.5) {
+    add_filter('gform_form_settings_fields', 'klypGFHSAdditionalSettings', 10, 2);
+} else {
+    add_filter('gform_form_settings', 'klypGFHSAdditionalSettingsLegacy', 10, 2);
+    add_filter('gform_pre_form_settings_save', 'klypGFHSAdditionalSettingsSubmit', 10, 2);
+}

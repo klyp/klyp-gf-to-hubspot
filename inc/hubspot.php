@@ -24,7 +24,7 @@ function klypGFHSFieldMapSetting($position, $form_id)
     $klypHubspot    = new klypHubspot();
     $hsFields       = $klypHubspot->getFormFields($GForm['klyp-gf-to-hubspot-form-id']);
 
-    if ($position == 50) {
+    if ($position == 0) {
         $return = '
             <li class="gf_to_hs_setting field_setting">
                 <label for="field_gf_to_hs_map" class="section_label">' . __('Hubspot field to map') . '</label>
@@ -51,16 +51,19 @@ function klypEditorScript()
     $return = '
         <script type="text/javascript">
             fieldSettings.checkbox += ", .gf_to_hs_setting";
+            fieldSettings.date += ", .gf_to_hs_setting";
             fieldSettings.email += ", .gf_to_hs_setting";
             fieldSettings.hidden += ", .gf_to_hs_setting";
             fieldSettings.multiselect += ", .gf_to_hs_setting";
-            fieldSettings.number += ", .gf_to_hs_setting";
+            fieldSettings.name += ", .gf_to_hs_setting";
             fieldSettings.number += ", .gf_to_hs_setting";
             fieldSettings.phone += ", .gf_to_hs_setting";
             fieldSettings.radio += ", .gf_to_hs_setting";
             fieldSettings.select += ", .gf_to_hs_setting";
             fieldSettings.text += ", .gf_to_hs_setting";
             fieldSettings.textarea += ", .gf_to_hs_setting";
+            fieldSettings.time += ", .gf_to_hs_setting";
+            fieldSettings.website += ", .gf_to_hs_setting";
 
             jQuery(document).on("gform_load_field_settings", function(event, field, form) {
                 jQuery("#field_gf_to_hs_map").val(field["field_gf_to_hs_map"]);

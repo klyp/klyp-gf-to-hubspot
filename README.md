@@ -7,6 +7,9 @@ https://gravityforms.com/
 
 ### Changes
 
+#### v1.0.4 - 2022.03.22
+Added support for date, time, name and website fields
+
 #### v1.0.3 - 2022.03.18
 Support for Gravity Forms v2.5 and above
 

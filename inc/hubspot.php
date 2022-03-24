@@ -51,6 +51,7 @@ function klypEditorScript()
     $return = '
         <script type="text/javascript">
             fieldSettings.checkbox += ", .gf_to_hs_setting";
+            fieldSettings.consent += ", .gf_to_hs_setting";
             fieldSettings.date += ", .gf_to_hs_setting";
             fieldSettings.email += ", .gf_to_hs_setting";
             fieldSettings.hidden += ", .gf_to_hs_setting";

@@ -3,7 +3,7 @@
  * Plugin Name: Klyp Gravity Form to Hubspot
  * Plugin URI: https://github.com/klyp/klyp-gf-to-hubspot
  * Description: This plugin allows you to map Gravity Forms fields to Hubspot form fields.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Klyp
  * Author URI: https://klyp.co
  * License: GPL2

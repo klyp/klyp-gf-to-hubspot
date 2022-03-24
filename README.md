@@ -7,6 +7,9 @@ https://gravityforms.com/
 
 ### Changes
 
+#### v1.0.5 - 2022.03.24
+Added support for consent field
+
 #### v1.0.4 - 2022.03.22
 Added support for date, time, name and website fields
 

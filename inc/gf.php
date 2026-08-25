@@ -83,7 +83,14 @@ function klypHsGFValidate($validationResult)
 
     $messages = array_filter(array_merge((array) rgar($result, 'errors'), array((string) rgar($result, 'message'))));
 
-    return klypHsGFFailValidation($validationResult, $messages, implode(' ', $messages));
+    // Rejection messages quote the values the visitor submitted, so the log
+    // entry only carries them when verbose logging is on. The failure itself
+    // is always recorded.
+    $logEntry = klypGFToHubspotLogPayloads()
+        ? implode(' ', $messages)
+        : sprintf('%d problem(s) reported; enable WP_DEBUG for detail', count($messages));
+
+    return klypHsGFFailValidation($validationResult, $messages, $logEntry);
 }
 add_filter('gform_validation', 'klypHsGFValidate', 20, 1);
 

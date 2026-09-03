@@ -2,12 +2,12 @@
 
 Map Gravity Forms fields to Hubspot form fields and deliver every submission to Hubspot.
 
-![version](https://img.shields.io/badge/version-2.0.0-blue)
+![version](https://img.shields.io/badge/version-2.1.0-blue)
 ![wordpress](https://img.shields.io/badge/wordpress-6.0%2B-21759b)
 ![php](https://img.shields.io/badge/php-8.0%2B-777bb4)
 ![gravity%20forms](https://img.shields.io/badge/gravity%20forms-2.5%2B-f15a29)
 ![license](https://img.shields.io/badge/license-GPL--2.0--or--later-green)
-![tests](https://img.shields.io/badge/tests-46%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)
 
 Licensed under GPL-2.0-or-later. See [License & Compliance](#license--compliance).
 
@@ -196,6 +196,8 @@ Hubspot form definitions are cached for 15 minutes. Clear them with the **Clear 
 | `klyp_gftohs_mappable_field_types` | see list above | Which Gravity Forms field types get the mapping setting. |
 | `klyp_gftohs_submission_payload` | payload array | Modify the payload before it is sent. |
 | `klyp_gftohs_api_base` | `https://api.hubapi.com/` | Override the authenticated API base URL. |
+| `klyp_gftohs_conversion_page_properties` | see below | Property names searched when auto-detecting the conversion page field. |
+| `klyp_gftohs_conversion_page_value` | scheme-less URL | The conversion page value sent to Hubspot. Return the third argument's `$sourceUrl` to send the fully qualified URL. |
 
 ```php
 // Send page context on a domain the Hubspot portal tracks.
@@ -364,6 +366,23 @@ This plugin transmits **personal data** — typically name, email address, phone
 ## Changelog
 
 This project follows [Semantic Versioning](https://semver.org/).
+
+### 2.1.0 — 2026-09-04
+
+- Record the conversion page automatically. The page a form was submitted from is
+  now sent to Hubspot as an ordinary form field, with the target property either
+  auto-detected (`conversion_page`, `page_url`, `form_page_url`, `landing_page`,
+  `source_url` and similar) or chosen in **Form Settings → Hubspot Settings →
+  Conversion page field in Hubspot**.
+- The value is sent without its scheme. Hubspot spam-filters a submission
+  carrying a fully qualified URL on a domain the portal does not recognise —
+  answering `HTTP 200` and then discarding the whole submission — which affects
+  field values, not just submission context. Use
+  `klyp_gftohs_conversion_page_value` to send the full URL on a portal that owns
+  the domain.
+- The property must exist on the Hubspot form. Hubspot accepts a submission
+  carrying a field the form does not declare and then drops that value, so the
+  form settings screen says so when no suitable field is present.
 
 ### 2.0.0 — 2026-08-25
 

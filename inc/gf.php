@@ -71,6 +71,7 @@ function klypHsGFValidate($validationResult)
     $hubspot->entry        = is_array($lead) ? $lead : array();
     $hubspot->gfEmailField = (string) rgar($form, 'klyp-gf-to-hubspot-gf-email-field');
     $hubspot->hsEmailField = (string) rgar($form, 'klyp-gf-to-hubspot-email-field');
+    $hubspot->hsConversionPageField = (string) rgar($form, 'klyp-gf-to-hubspot-conversion-page-field');
 
     $result = $hubspot->createContact();
 

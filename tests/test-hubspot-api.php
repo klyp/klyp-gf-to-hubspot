@@ -341,5 +341,91 @@ list($unknown,) = klyp_submit_dropdown('anything', 'not_on_this_form');
 check('property missing from the Hubspot form is reported', $unknown['success'], false);
 check('unknown property error names the property', strpos($unknown['errors'][0], 'fields.not_on_this_form') !== false, true);
 
+/* ---------------------------------------------------- conversion page ---- */
+
+echo "\nConversion page\n";
+
+/**
+ * Submit against a Hubspot form whose field list is supplied, and return the
+ * fields that were posted, keyed by property name.
+ */
+function klyp_submit_conversion($hsFormFields, $configuredProperty = '', $sourceUrl = 'https://mapien.php.local.klyp.site/contact/')
+{
+    $GLOBALS['transients'] = array();
+    $GLOBALS['options']['klyp_gftohs_access_token'] = 'pat-na1-test';
+
+    $hs = new klypHubspot();
+    $hs->hsFormId              = 'form-guid';
+    $hs->hsConversionPageField = $configuredProperty;
+    $hs->gfFormFields          = array(new GF_Field(array(
+        'id' => 1, 'type' => 'email', 'label' => 'Email', 'field_gf_to_hs_map' => 'email',
+    )));
+    $hs->entry = array('id' => '400', '1' => 'jane@example.com', 'source_url' => $sourceUrl);
+
+    $GLOBALS['http_next'] = array(
+        'response' => array('code' => 200),
+        'body'     => json_encode(array('fieldGroups' => array(array('fields' => $hsFormFields)))),
+    );
+    $hs->getFormFields('form-guid');
+
+    $GLOBALS['http_next'] = array('response' => array('code' => 200), 'body' => '{}');
+    $hs->createContact();
+
+    $sent = json_decode(end($GLOBALS['http_calls'])['args']['body'], true);
+    $map  = array();
+    foreach ($sent['fields'] as $f) {
+        $map[$f['name']] = $f['value'];
+    }
+
+    return $map;
+}
+
+$emailOnly = array(array('name' => 'email', 'label' => 'Email', 'fieldType' => 'email'));
+$withConv  = array_merge($emailOnly, array(array('name' => 'conversion_page', 'label' => 'Conversion page', 'fieldType' => 'single_line_text')));
+$withAlt   = array_merge($emailOnly, array(array('name' => 'page_url', 'label' => 'Page URL', 'fieldType' => 'single_line_text')));
+$withOther = array_merge($emailOnly, array(array('name' => 'custom_landing', 'label' => 'Landing', 'fieldType' => 'single_line_text')));
+
+$m = klyp_submit_conversion($withConv);
+check('conversion_page detected and populated automatically', $m['conversion_page'] ?? null, 'mapien.php.local.klyp.site/contact/');
+check('scheme stripped so Hubspot does not spam-filter it', strpos($m['conversion_page'] ?? '', '://'), false);
+
+$m = klyp_submit_conversion($withAlt);
+check('page_url is also detected', $m['page_url'] ?? null, 'mapien.php.local.klyp.site/contact/');
+
+$m = klyp_submit_conversion($withOther);
+check('no conventional field means nothing is sent', array_key_exists('custom_landing', $m), false);
+
+$m = klyp_submit_conversion($withOther, 'custom_landing');
+check('an explicitly configured property is used', $m['custom_landing'] ?? null, 'mapien.php.local.klyp.site/contact/');
+
+$m = klyp_submit_conversion($withConv, 'not_on_this_form');
+check('a configured property absent from the form is skipped', array_key_exists('not_on_this_form', $m), false);
+
+$m = klyp_submit_conversion($withConv, '', '');
+check('no source url means no conversion page field', array_key_exists('conversion_page', $m), false);
+
+// A per-field mapping to the same property must win over the automatic value.
+$GLOBALS['transients'] = array();
+$GLOBALS['options']['klyp_gftohs_access_token'] = 'pat-na1-test';
+$hsMapped = new klypHubspot();
+$hsMapped->hsFormId     = 'form-guid';
+$hsMapped->gfFormFields = array(new GF_Field(array(
+    'id' => 7, 'type' => 'text', 'label' => 'Page', 'field_gf_to_hs_map' => 'conversion_page',
+)));
+$hsMapped->entry = array('id' => '401', '7' => 'explicit-value', 'source_url' => 'https://example.test/x/');
+$GLOBALS['http_next'] = array('response' => array('code' => 200), 'body' => json_encode(array('fieldGroups' => array(array('fields' => $withConv)))));
+$hsMapped->getFormFields('form-guid');
+$GLOBALS['http_next'] = array('response' => array('code' => 200), 'body' => '{}');
+$hsMapped->createContact();
+$sentMapped = json_decode(end($GLOBALS['http_calls'])['args']['body'], true);
+$mapped = array();
+foreach ($sentMapped['fields'] as $f) { $mapped[$f['name']] = $f['value']; }
+check('an existing field mapping is not overwritten', $mapped['conversion_page'] ?? null, 'explicit-value');
+
+$GLOBALS['filters']['klyp_gftohs_conversion_page_value'] = function ($value, $sourceUrl) { return $sourceUrl; };
+$m = klyp_submit_conversion($withConv);
+unset($GLOBALS['filters']['klyp_gftohs_conversion_page_value']);
+check('filter can restore the fully qualified URL', $m['conversion_page'] ?? null, 'https://mapien.php.local.klyp.site/contact/');
+
 printf("\n%d passed, %d failed\n", $pass, $fail);
 exit($fail === 0 ? 0 : 1);

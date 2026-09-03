@@ -4,7 +4,7 @@ Tags: contact, form, gravity, forms, hubspot
 Requires at least: 6.0
 Tested up to: 7.0.4
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.1.0
 License: GPL2+
 License URI: https://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -17,6 +17,9 @@ Requires Gravity Forms 2.5 or newer and a Hubspot Private App access token with
 the "forms" scope.
 
 == Changelog ==
+v2.1.0 - 2026-09-04
+Records the conversion page: the plugin now sends the page a form was submitted from to Hubspot automatically. It travels as an ordinary form field rather than submission context, because Hubspot spam-filters context on a domain the portal does not recognise. The target property is auto-detected from the Hubspot form (conversion_page, page_url and similar) or chosen in the form's Hubspot settings, and the value is sent without its scheme so it survives on portals that do not own the domain.
+
 v2.0.0 - 2026.08.25
 Compatibility release for Gravity Forms 2.9 and PHP 8.3. Replaced the sunset Hubspot API key authentication and Forms v2 API with a Private App access token against the Marketing Forms v3 API; the API key and base URL settings are removed and a token must be configured. Fixed the admin screens halting when Hubspot returned an error, and a fatal error when Gravity Forms was deactivated. A Hubspot failure now blocks the submission and shows the visitor an error instead of appearing to succeed, and the payload is validated against the Hubspot form before sending. Page context is no longer sent by default, which was causing Hubspot to accept and then silently discard submissions. Every submission is logged. Fixed multi-input, multi select, consent, list and boolean checkbox values. Rebuilt the settings screen with a live connection check and a Hubspot form picker. See README.md for the full list.
 

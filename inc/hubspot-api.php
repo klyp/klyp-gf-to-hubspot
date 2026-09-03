@@ -119,6 +119,12 @@ class klypHubspot
     public $hsEmailField = '';
 
     /**
+     * @var string Hubspot property the conversion page is written to. Left
+     *             empty to auto-detect from the Hubspot form's own fields.
+     */
+    public $hsConversionPageField = '';
+
+    /**
      * @var array Gravity Forms entry being sent.
      */
     public $entry = array();
@@ -508,6 +514,19 @@ class klypHubspot
             $values[$this->hsEmailField] = $emailValue;
         }
 
+        // Record the page the form was submitted from. This travels as an
+        // ordinary field rather than submission context, because Hubspot
+        // spam-filters context on a domain the portal does not recognise.
+        $conversionProperty = $this->conversionPageProperty($hsFields);
+
+        if ($conversionProperty !== '' && ! isset($values[$conversionProperty])) {
+            $conversionValue = $this->conversionPageValue();
+
+            if ($conversionValue !== '') {
+                $values[$conversionProperty] = $conversionValue;
+            }
+        }
+
         $data = array();
 
         foreach ($values as $name => $value) {
@@ -518,6 +537,100 @@ class klypHubspot
         }
 
         return $data;
+    }
+
+    /**
+     * Hubspot property names searched when auto-detecting the conversion page
+     *
+     * @return array
+     */
+    public static function conversionPageCandidates()
+    {
+        /**
+         * Filter the property names searched for when auto-detecting the
+         * Hubspot field that records the conversion page.
+         *
+         * @param array $candidates
+         */
+        return (array) apply_filters(
+            'klyp_gftohs_conversion_page_properties',
+            array(
+                'conversion_page',
+                'conversion_page_url',
+                'page_url',
+                'form_page_url',
+                'form_page',
+                'landing_page',
+                'landing_page_url',
+                'source_url',
+                'submitted_from',
+            )
+        );
+    }
+
+    /**
+     * Resolve the Hubspot property that should hold the conversion page
+     *
+     * Uses the property chosen in the form's Hubspot settings; failing that,
+     * looks for a conventionally named field on the Hubspot form. Either way
+     * the property has to exist on the form — Hubspot accepts a submission
+     * carrying a field the form does not declare and then drops that value.
+     *
+     * @param array $hsFields Hubspot field definitions keyed by property name.
+     * @return string
+     */
+    private function conversionPageProperty($hsFields)
+    {
+        $configured = trim((string) $this->hsConversionPageField);
+
+        if ($configured !== '') {
+            return isset($hsFields[$configured]) ? $configured : '';
+        }
+
+        foreach (self::conversionPageCandidates() as $candidate) {
+            if (isset($hsFields[$candidate])) {
+                return (string) $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * The page the form was submitted from
+     *
+     * The scheme is stripped by default. Hubspot spam-filters a submission
+     * carrying a fully qualified URL on a domain the portal does not
+     * recognise — answering HTTP 200 and then discarding the whole
+     * submission — which a scheme-less value avoids while staying readable.
+     *
+     * @return string
+     */
+    private function conversionPageValue()
+    {
+        $sourceUrl = (string) rgar($this->entry, 'source_url');
+
+        if ($sourceUrl === '') {
+            $sourceUrl = (string) wp_get_referer();
+        }
+
+        if ($sourceUrl === '') {
+            return '';
+        }
+
+        $value = preg_replace('#^[a-z][a-z0-9+.-]*://#i', '', $sourceUrl);
+
+        /**
+         * Filter the conversion page value sent to Hubspot.
+         *
+         * Return $sourceUrl to send the fully qualified URL — safe only on a
+         * portal that recognises the domain.
+         *
+         * @param string $value     Scheme-less URL.
+         * @param string $sourceUrl The original URL.
+         * @param array  $entry
+         */
+        return (string) apply_filters('klyp_gftohs_conversion_page_value', $value, $sourceUrl, $this->entry);
     }
 
     /**

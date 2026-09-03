@@ -322,7 +322,69 @@ function klypGFHSAdditionalSettings($fields, $form)
         'choices'       => $hsFieldsChoices,
     );
 
+    // Conversion page. Auto-detected when left unset.
+    $detected = klypGFHSDetectConversionPageField($cached['fields']);
+
+    $conversionChoices = array(
+        array(
+            'label' => $detected !== ''
+                /* translators: %s: Hubspot property name */
+                ? sprintf(__('Detected automatically (%s)', 'klyp-gf-to-hubspot'), $detected)
+                : __('— Not recorded —', 'klyp-gf-to-hubspot'),
+            'value' => '',
+        ),
+    );
+
+    $conversionChoices = array_merge($conversionChoices, array_slice($hsFieldsChoices, 1));
+
+    $fields['klyp-gf-to-hubspot']['fields'][] = array(
+        'name'          => 'klyp-gf-to-hubspot-conversion-page-field',
+        'type'          => 'select',
+        'label'         => __('Conversion page field in Hubspot', 'klyp-gf-to-hubspot'),
+        'default_value' => '',
+        'tooltip'       => __('The Hubspot property that records which page the form was submitted from. The field must exist on the Hubspot form — Hubspot accepts a submission carrying a field the form does not declare, then drops that value. Leave unset to detect a conventionally named field automatically.', 'klyp-gf-to-hubspot'),
+        'choices'       => $conversionChoices,
+    );
+
+    if ($detected === '' && trim((string) rgar($form, 'klyp-gf-to-hubspot-conversion-page-field')) === '') {
+        $fields['klyp-gf-to-hubspot']['fields'][] = array(
+            'name' => 'klyp-gf-to-hubspot-conversion-page-notice',
+            'type' => 'html',
+            'html' => sprintf(
+                '<div class="alert info">%s</div>',
+                sprintf(
+                    /* translators: %s: comma separated list of property names */
+                    esc_html__('This Hubspot form has no field for the conversion page. Add a single-line text field to the form in Hubspot — name it one of %s to have it picked up automatically — then clear the cached fields on the plugin settings screen.', 'klyp-gf-to-hubspot'),
+                    esc_html(implode(', ', array_slice(klypHubspot::conversionPageCandidates(), 0, 4)))
+                )
+            ),
+        );
+    }
+
     return $fields;
+}
+
+/**
+ * Find a conventionally named conversion page field on the Hubspot form
+ *
+ * @param array $hsFields
+ * @return string
+ */
+function klypGFHSDetectConversionPageField($hsFields)
+{
+    $names = array();
+
+    foreach ((array) $hsFields as $hsField) {
+        $names[(string) rgobj($hsField, 'name')] = true;
+    }
+
+    foreach (klypHubspot::conversionPageCandidates() as $candidate) {
+        if (isset($names[$candidate])) {
+            return (string) $candidate;
+        }
+    }
+
+    return '';
 }
 add_filter('gform_form_settings_fields', 'klypGFHSAdditionalSettings', 10, 2);
 

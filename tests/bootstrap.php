@@ -39,6 +39,7 @@ function wp_json_encode($d) { return json_encode($d); }
 function sanitize_text_field($s) { return trim(strip_tags((string) $s)); }
 function wp_unslash($s) { return $s; }
 function esc_url_raw($u) { return $u; }
+function wp_parse_url($u, $c = -1) { return $c === -1 ? parse_url($u) : parse_url($u, $c); }
 function wp_get_referer() { return false; }
 function url_to_postid($u) { return $u === 'https://example.test/contact/' ? 42 : 0; }
 function get_the_title($id) { return $id === 42 ? 'Contact Us' : ''; }

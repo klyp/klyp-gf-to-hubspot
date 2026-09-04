@@ -110,19 +110,30 @@ check('duplicate property appears once', count(array_filter($sent['fields'], fn(
 check('duplicate property keeps the last mapped value', $map['referrer'] ?? null, 'Referral');
 
 echo "\nContext\n";
-check('pageUri is NOT sent by default (spam-filter hazard)', array_key_exists('pageUri', $sent['context'] ?? array()), false);
-check('pageName is NOT sent by default', array_key_exists('pageName', $sent['context'] ?? array()), false);
+check('pageUri sent by default (populates Conversion page)', $sent['context']['pageUri'] ?? null, 'https://example.test/contact/');
+check('pageName sent by default', $sent['context']['pageName'] ?? null, 'Contact Us');
 check('ipAddress from entry', $sent['context']['ipAddress'] ?? null, '203.0.113.9');
 
-// Opting in via the filter restores the page context.
-$GLOBALS['filters']['klyp_gftohs_send_page_context'] = function () { return true; };
+// The filter still allows opting out where the portal cannot see the domain.
+$GLOBALS['filters']['klyp_gftohs_send_page_context'] = function () { return false; };
 $GLOBALS['http_next'] = array('response' => array('code' => 200), 'body' => '{}');
 $hs->createContact();
-$sentOptIn = json_decode(end($GLOBALS['http_calls'])['args']['body'], true);
+$sentOptOut = json_decode(end($GLOBALS['http_calls'])['args']['body'], true);
 unset($GLOBALS['filters']['klyp_gftohs_send_page_context']);
 
-check('pageUri sent when klyp_gftohs_send_page_context is on', $sentOptIn['context']['pageUri'] ?? null, 'https://example.test/contact/');
-check('pageName sent when the filter is on', $sentOptIn['context']['pageName'] ?? null, 'Contact Us');
+check('pageUri withheld when the filter returns false', array_key_exists('pageUri', $sentOptOut['context'] ?? array()), false);
+check('pageName withheld when the filter returns false', array_key_exists('pageName', $sentOptOut['context'] ?? array()), false);
+check('ipAddress still sent when page context is off', $sentOptOut['context']['ipAddress'] ?? null, '203.0.113.9');
+
+// A URL that does not resolve to a post still gets a readable page name.
+$hsPath = new klypHubspot();
+$hsPath->hsFormId     = 'form-guid';
+$hsPath->gfFormFields = array(new GF_Field(array('id' => 1, 'type' => 'email', 'label' => 'Email', 'field_gf_to_hs_map' => 'email')));
+$hsPath->entry        = array('id' => '500', '1' => 'jane@example.com', 'source_url' => 'https://example.test/news/archive/');
+$GLOBALS['http_next'] = array('response' => array('code' => 200), 'body' => '{}');
+$hsPath->createContact();
+$sentPath = json_decode(end($GLOBALS['http_calls'])['args']['body'], true);
+check('pageName falls back to the path for a non-post URL', $sentPath['context']['pageName'] ?? null, 'news/archive');
 
 /* ------------------------------------------------------- email guarantee -- */
 

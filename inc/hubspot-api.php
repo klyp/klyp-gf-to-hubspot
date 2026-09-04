@@ -763,16 +763,20 @@ class klypHubspot
         /**
          * Whether to send the page URL and title with the submission.
          *
-         * Off by default: Hubspot spam-filters a submission whose pageUri is
-         * on a domain the portal does not recognise — it answers HTTP 200 and
-         * then discards the whole submission without recording it anywhere
-         * (verified against the live API). Enable this only on a domain the
-         * Hubspot portal tracks.
+         * On by default: pageUri is the only thing that populates Hubspot's
+         * own "Conversion page" column, and pageName the page title beside it.
+         *
+         * Note that Hubspot spam-filters a submission whose pageUri is on a
+         * domain the portal does not recognise — it answers HTTP 200 and then
+         * discards the whole submission without recording it anywhere. Return
+         * false here on any environment whose domain the portal cannot see,
+         * such as a local development host, so submissions still reach
+         * Hubspot without the conversion page.
          *
          * @param bool  $send
          * @param array $entry
          */
-        if (apply_filters('klyp_gftohs_send_page_context', false, $this->entry)) {
+        if (apply_filters('klyp_gftohs_send_page_context', true, $this->entry)) {
             // The entry records the page the form was submitted from, which
             // is more reliable than the referer header.
             $sourceUrl = rgar($this->entry, 'source_url');
@@ -784,9 +788,16 @@ class klypHubspot
             if (! empty($sourceUrl)) {
                 $context['pageUri'] = esc_url_raw($sourceUrl);
                 $postId             = url_to_postid($sourceUrl);
+                $pageName           = $postId ? get_the_title($postId) : '';
 
-                if ($postId) {
-                    $context['pageName'] = get_the_title($postId);
+                // Fall back to the path so the column is never blank when the
+                // URL does not resolve to a post — an archive, or the home page.
+                if ($pageName === '') {
+                    $pageName = trim((string) wp_parse_url($sourceUrl, PHP_URL_PATH), '/');
+                }
+
+                if ($pageName !== '') {
+                    $context['pageName'] = $pageName;
                 }
             }
         }

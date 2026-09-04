@@ -2,12 +2,12 @@
 
 Map Gravity Forms fields to Hubspot form fields and deliver every submission to Hubspot.
 
-![version](https://img.shields.io/badge/version-2.0.0-blue)
+![version](https://img.shields.io/badge/version-2.1.0-blue)
 ![wordpress](https://img.shields.io/badge/wordpress-6.0%2B-21759b)
 ![php](https://img.shields.io/badge/php-8.0%2B-777bb4)
 ![gravity%20forms](https://img.shields.io/badge/gravity%20forms-2.5%2B-f15a29)
 ![license](https://img.shields.io/badge/license-GPL--2.0--or--later-green)
-![tests](https://img.shields.io/badge/tests-46%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-49%20passing-brightgreen)
 
 Licensed under GPL-2.0-or-later. See [License & Compliance](#license--compliance).
 
@@ -43,6 +43,7 @@ A WordPress plugin that connects a Gravity Form to a Hubspot form. Each Gravity 
 - **Pre-flight payload validation.** The payload is checked against the Hubspot form definition before it is sent. Hubspot answers a submission carrying an invalid dropdown option with `HTTP 200` and then discards it, so such a submission would otherwise vanish with no error raised anywhere.
 - **Full request tracing.** Every submission writes its payload and Hubspot's response to `wp-content/debug.log`.
 - **Correct value shaping** for checkbox, multi-select, consent, list, date and multi-input (Name, Address) fields, including boolean coercion for Hubspot `single_checkbox` properties.
+- **Conversion page recorded.** The page URL and title are sent with every submission, populating Hubspot's own **Conversion page** column.
 - **Cached form definitions** (15 minutes) so the form editor does not call the Hubspot API once per field.
 
 ### Scope boundaries
@@ -183,6 +184,18 @@ A Hubspot failure fails validation and blocks the submission. Where Hubspot name
 
 If the Hubspot field list cannot be loaded, the pre-flight check is skipped rather than blocking every submission — Hubspot's own response then decides the outcome.
 
+### Conversion page
+
+The page the form was submitted from is sent as `pageUri`, with its title as `pageName`. This is what fills Hubspot's **Conversion page** column; a custom property cannot, because that column reads only the submission context.
+
+**Hubspot discards a submission whose page URL is on a domain the portal does not recognise.** It answers `HTTP 200` and then records nothing at all — no contact, no submission, no error. A local development host is the usual case, since the domain is not publicly reachable and the portal has never seen it. Withhold the page context there so submissions still arrive:
+
+```php
+add_filter('klyp_gftohs_send_page_context', '__return_false');
+```
+
+`pageName` falls back to the URL path when the page is not a post, so the column is never blank. The visitor's `hutk` tracking cookie and IP address are sent regardless of this setting.
+
 ### Caching
 
 Hubspot form definitions are cached for 15 minutes. Clear them with the **Clear cached Hubspot fields** button on the settings screen after changing a form in Hubspot.
@@ -191,15 +204,16 @@ Hubspot form definitions are cached for 15 minutes. Clear them with the **Clear 
 
 | Filter | Default | Purpose |
 |---|---|---|
-| `klyp_gftohs_send_page_context` | `false` | Send `pageUri` / `pageName`. **Off by default:** Hubspot spam-filters a submission whose page URL is on a domain the portal does not recognise — returning `HTTP 200` and discarding it. Enable only on a tracked domain. |
+| `klyp_gftohs_send_page_context` | `true` | Send `pageUri` / `pageName` — this is what populates Hubspot's **Conversion page** column. Return `false` on an environment whose domain the portal cannot see: Hubspot discards a submission whose page URL is on an unrecognised domain, answering `HTTP 200` and recording nothing. |
 | `klyp_gftohs_error_message` | generic message | Wording shown above the form when a failure cannot be attributed to a field. |
 | `klyp_gftohs_mappable_field_types` | see list above | Which Gravity Forms field types get the mapping setting. |
 | `klyp_gftohs_submission_payload` | payload array | Modify the payload before it is sent. |
 | `klyp_gftohs_api_base` | `https://api.hubapi.com/` | Override the authenticated API base URL. |
 
 ```php
-// Send page context on a domain the Hubspot portal tracks.
-add_filter('klyp_gftohs_send_page_context', '__return_true');
+// Local development: the portal cannot see this domain, so withhold the page
+// context and let the submission through without a conversion page.
+add_filter('klyp_gftohs_send_page_context', '__return_false');
 ```
 
 ---
@@ -355,7 +369,7 @@ This plugin transmits **personal data** — typically name, email address, phone
 |---|---|
 | Mapping dropdown shows "Hubspot fields could not be loaded" | Missing/invalid Private App token, wrong form GUID, or the token lacks the `forms` scope. |
 | Form blocks with "not one of the accepted options" | A mapped field sends free text to a Hubspot dropdown. Map it to a text property or send a valid option value. |
-| Hubspot returns `HTTP 200` but nothing appears in Hubspot | Page context sent from a domain the portal does not recognise. Confirm `klyp_gftohs_send_page_context` is off, and check `debug.log` for the payload. |
+| Hubspot returns `HTTP 200` but nothing appears in Hubspot | Page context sent from a domain the portal does not recognise. Turn it off with `klyp_gftohs_send_page_context`, and check `debug.log` for the payload. |
 | Hubspot reports a required field missing | The Hubspot form marks a property required but the Gravity Forms field is optional and was left empty. |
 | Form editor shows stale Hubspot fields | Use **Clear cached Hubspot fields** on the settings screen. |
 
@@ -364,6 +378,11 @@ This plugin transmits **personal data** — typically name, email address, phone
 ## Changelog
 
 This project follows [Semantic Versioning](https://semver.org/).
+
+### 2.1.0 — 2026-09-04
+
+- Send `pageUri` and `pageName` with every submission, so Hubspot records the conversion page. `pageName` falls back to the URL path when the page is not a post, so the column is never blank.
+- Hubspot discards a submission whose page URL is on a domain the portal does not recognise — `HTTP 200`, recorded nowhere. Return `false` from `klyp_gftohs_send_page_context` on any environment with that problem, such as a local development host.
 
 ### 2.0.0 — 2026-08-25
 
@@ -374,7 +393,7 @@ Compatibility release for Gravity Forms 2.9 and PHP 8.3.
 - Fixed a fatal error that took the whole site down when Gravity Forms was deactivated.
 - A Hubspot failure now blocks the form and shows the visitor an error instead of the submission appearing to succeed.
 - Added pre-flight payload validation against the Hubspot form definition.
-- `pageUri` / `pageName` are no longer sent by default; opt in with `klyp_gftohs_send_page_context`.
+- `pageUri` / `pageName` were not sent by default in this release; 2.1.0 restores them.
 - Fixed multi-input, multi-select, consent, list and boolean checkbox value handling.
 - Every submission's payload and response is written to `wp-content/debug.log`.
 - Resolved PHP 8 deprecations; added a standalone test suite.
